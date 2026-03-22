@@ -1,0 +1,10 @@
+FROM python:3.11-slim
+
+WORKDIR /tests
+ENV PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1
+
+RUN pip install --upgrade pip \
+ && pip install pytest httpx anyio
+
+COPY tests ./tests
+CMD ["pytest", "-q", "tests/functional"]

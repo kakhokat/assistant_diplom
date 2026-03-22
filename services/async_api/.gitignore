@@ -1,0 +1,23 @@
+# Byte-compiled / optimized
+__pycache__/
+.pytest_cache/
+*/__pycache__/
+
+# Virtualenvs
+venv/
+
+# IDEs
+.vscode/
+.idea/
+
+# Docker
+*.env
+.env
+docker-compose.override.yml
+
+
+.venv
+venv
+collect.py
+collect/
+.coverage

@@ -1,0 +1,94 @@
+services:
+  auth_api:
+    build: .
+    container_name: auth-service
+    environment:
+      - PROJECT_NAME=${PROJECT_NAME:-auth-service}
+      - APP_ENV=${APP_ENV:-development}
+      - GUNICORN_WORKERS=1
+      - GUNICORN_THREADS=1
+      # Postgres
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${DB_USER:-auth_user}
+      - DB_PASSWORD=${DB_PASSWORD:-auth_password}
+      - DB_NAME=${DB_NAME:-auth_db}
+      # Redis
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      # JWT
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
+      - ACCESS_TOKEN_EXPIRES_IN=${ACCESS_TOKEN_EXPIRES_IN:-900}
+      - REFRESH_TOKEN_EXPIRES_IN=${REFRESH_TOKEN_EXPIRES_IN:-2592000}
+      # Docs / OpenAPI
+      - DOCS_URL=${DOCS_URL:-/docs}
+      - OPENAPI_URL=${OPENAPI_URL:-/openapi.json}
+      - CORS_ALLOW_ORIGINS=${CORS_ALLOW_ORIGINS:-*}
+      - PROXY_TRUSTED_HOSTS=${PROXY_TRUSTED_HOSTS:-*}
+
+      # Tracing / Request ID
+      - OTEL_ENABLED=${OTEL_ENABLED:-true}
+      - OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME:-auth-service}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-http://jaeger:4318/v1/traces}
+      - OTEL_EXPORTER_OTLP_PROTOCOL=${OTEL_EXPORTER_OTLP_PROTOCOL:-http/protobuf}
+      - REQUEST_ID_HEADER=${REQUEST_ID_HEADER:-x-request-id}
+
+      # Rate limiting
+      - RATE_LIMIT_ENABLED=${RATE_LIMIT_ENABLED:-true}
+      - RATE_LIMIT_REQUESTS=${RATE_LIMIT_REQUESTS:-200}
+      - RATE_LIMIT_WINDOW_SECONDS=${RATE_LIMIT_WINDOW_SECONDS:-60}
+      - RATE_LIMIT_FAIL_OPEN=${RATE_LIMIT_FAIL_OPEN:-true}
+
+      # Internal integration
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY}
+
+      # OAuth (Yandex)
+      - YANDEX_OAUTH_CLIENT_ID=${YANDEX_OAUTH_CLIENT_ID:-}
+      - YANDEX_OAUTH_CLIENT_SECRET=${YANDEX_OAUTH_CLIENT_SECRET:-}
+      - YANDEX_OAUTH_REDIRECT_URI=${YANDEX_OAUTH_REDIRECT_URI:-http://localhost:8000/api/v1/oauth/yandex/callback}
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      jaeger:
+        condition: service_started
+    ports:
+      - "${API_PORT:-8000}:8000"
+    restart: always
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: auth-postgres
+    environment:
+      - POSTGRES_DB=${DB_NAME:-auth_db}
+      - POSTGRES_USER=${DB_USER:-auth_user}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-auth_password}
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-auth_user} -d ${DB_NAME:-auth_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: always
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: auth-redis
+    command: ["sh","-c","exec redis-server --appendonly yes"]
+    ports:
+      - "6379:6379"
+    restart: always
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.47.0
+    container_name: auth-jaeger
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+      - "4318:4318"
+    restart: always

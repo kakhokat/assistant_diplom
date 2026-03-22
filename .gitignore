@@ -1,0 +1,20 @@
+# Local secrets / env files
+.env
+.env.local
+.env.*.local
+services/*/.env
+services/*/*/.env
+
+# Runtime artifacts
+scripts/.artifacts/
+*.log
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+
+# IDE
+.vscode/
+.idea/

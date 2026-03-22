@@ -1,0 +1,124 @@
+{
+  "intents": [
+    {
+      "name": "film_rating",
+      "requires_auth": false,
+      "entity": "film_title",
+      "description": "Узнать рейтинг фильма",
+      "examples": [
+        "какая оценка у фильма \"Lunar: The Silver Star\"?",
+        "какой рейтинг у фильма \"Silent Moon\"?"
+      ]
+    },
+    {
+      "name": "film_director",
+      "requires_auth": false,
+      "entity": "film_title",
+      "description": "Узнать режиссёра фильма",
+      "examples": [
+        "кто режиссёр фильма \"Lunar: The Silver Star\"?",
+        "кто снял фильм \"Silent Moon\"?"
+      ]
+    },
+    {
+      "name": "film_duration",
+      "requires_auth": false,
+      "entity": "film_title",
+      "description": "Узнать длительность фильма",
+      "examples": [
+        "сколько длится фильм \"Silent Moon\"?",
+        "какая длительность у фильма \"Lunar: The Silver Star\"?"
+      ]
+    },
+    {
+      "name": "film_genres",
+      "requires_auth": false,
+      "entity": "film_title",
+      "description": "Узнать жанры фильма",
+      "examples": [
+        "какие жанры у фильма \"Silent Moon\"?",
+        "жанры фильма \"Lunar: The Silver Star\""
+      ]
+    },
+    {
+      "name": "film_overview",
+      "requires_auth": false,
+      "entity": "film_title",
+      "description": "Получить краткую сводку по фильму",
+      "examples": [
+        "расскажи про фильм \"Silent Moon\"",
+        "дай краткую сводку по фильму \"Lunar: The Silver Star\""
+      ]
+    },
+    {
+      "name": "person_movie_count",
+      "requires_auth": false,
+      "entity": "person_name",
+      "description": "Узнать, сколько фильмов у человека",
+      "examples": [
+        "сколько фильмов у \"Алекс Дрэгонмастер\"?",
+        "сколько фильмов у \"Луна Сильвер\"?"
+      ]
+    },
+    {
+      "name": "person_filmography",
+      "requires_auth": false,
+      "entity": "person_name",
+      "description": "Получить фильмографию человека",
+      "examples": [
+        "какие фильмы у \"Алекс Дрэгонмастер\"?",
+        "какие фильмы у \"Луна Сильвер\"?"
+      ]
+    },
+    {
+      "name": "bookmarks",
+      "requires_auth": true,
+      "entity": null,
+      "description": "Показать мои закладки",
+      "examples": [
+        "что у меня в закладках?",
+        "покажи мои закладки"
+      ]
+    },
+    {
+      "name": "recommend_by_genre",
+      "requires_auth": true,
+      "entity": null,
+      "description": "Дать рекомендацию по любимым жанрам пользователя",
+      "examples": [
+        "посоветуй мне фильмы по моим любимым жанрам",
+        "что посмотреть по моим любимым жанрам"
+      ]
+    },
+    {
+      "name": "recommend_by_person",
+      "requires_auth": false,
+      "entity": "person_name",
+      "description": "Посоветовать фильмы с участием человека или от человека",
+      "examples": [
+        "посоветуй фильмы с \"Алекс Дрэгонмастер\"",
+        "порекомендуй фильмы от \"Луна Сильвер\""
+      ]
+    },
+    {
+      "name": "recommend_general",
+      "requires_auth": false,
+      "entity": null,
+      "description": "Посоветовать что посмотреть без дополнительных условий",
+      "examples": [
+        "посоветуй фильм",
+        "что посмотреть вечером?"
+      ]
+    },
+    {
+      "name": "help",
+      "requires_auth": false,
+      "entity": null,
+      "description": "Подсказка по возможностям ассистента",
+      "examples": [
+        "что ты умеешь?",
+        "подскажи, чем можешь помочь"
+      ]
+    }
+  ]
+}

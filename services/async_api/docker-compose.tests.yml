@@ -1,0 +1,11 @@
+services:
+  tests:
+    build:
+      context: .
+      dockerfile: tests/Dockerfile.test
+    depends_on:
+      api:
+        condition: service_started
+    environment:
+      - API_BASE_URL=http://api:8000
+    command: ["pytest", "-q", "tests/functional"]

@@ -1,0 +1,717 @@
+openapi: 3.0.3
+info:
+  title: Auth Service API
+  version: "1.0.0"
+  description: >
+    Сервис аутентификации и управления ролями для онлайн-кинотеатра.
+    Предоставляет REST API для регистрации, входа, выхода, обновления токенов,
+    управления ролями и проверки прав доступа.
+
+servers:
+  - url: http://localhost:8000
+    description: Local dev server
+
+tags:
+  - name: auth
+    description: Аутентификация и управление токенами
+  - name: users
+    description: Личный кабинет и история входов
+  - name: roles
+    description: Управление ролями и назначениями
+  - name: permissions
+    description: Проверка прав доступа для других сервисов
+  - name: oauth
+    description: Вход через внешних провайдеров (OAuth)
+
+paths:
+  /api/v1/auth/signup:
+    post:
+      tags: [auth]
+      summary: Регистрация нового пользователя
+      operationId: signup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+      responses:
+        '201':
+          description: Пользователь создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRead'
+        '409':
+          description: Логин уже занят
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Ошибка валидации входных данных
+
+  /api/v1/auth/login:
+    post:
+      tags: [auth]
+      summary: Вход пользователя и получение пары токенов
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Пара access/refresh токенов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPair'
+        '401':
+          description: Неверный логин или пароль
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Ошибка валидации входных данных
+
+  /api/v1/auth/refresh:
+    post:
+      tags: [auth]
+      summary: Обновление пары токенов по refresh-токену
+      operationId: refreshTokens
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token:
+                  type: string
+                  description: Refresh JWT (сырой токен клиента)
+      responses:
+        '200':
+          description: Новая пара токенов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPair'
+        '400':
+          description: Не передан refresh_token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Refresh токен недействителен, истёк или отозван
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/auth/me:
+    get:
+      tags: [auth]
+      summary: Получить профиль текущего пользователя
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Профиль пользователя
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          description: Неавторизован или токен устарел
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/auth/logout:
+    post:
+      tags: [auth]
+      summary: Выход из текущей сессии
+      operationId: logout
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Успешный выход
+        '401':
+          description: Неверный или истёкший токен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/auth/logout-others:
+    post:
+      tags: [auth]
+      summary: Выход из остальных сессий
+      description: >
+        Инвалидирует все refresh-токены пользователя и увеличивает token_version,
+        из-за чего все ранее выданные access-токены становятся недействительными.
+      operationId: logoutOthers
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Остальные сессии деактивированы
+        '401':
+          description: Неверный или истёкший токен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/users/me:
+    patch:
+      tags: [users]
+      summary: Изменение логина/пароля текущего пользователя
+      operationId: updateMe
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+      responses:
+        '200':
+          description: Обновлённый профиль пользователя
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '400':
+          description: Ошибка в old_password или некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Неавторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Новый логин уже занят
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/users/me/login-history:
+    get:
+      tags: [users]
+      summary: История входов текущего пользователя
+      operationId: getLoginHistory
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Максимальное количество записей
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Смещение для пагинации
+      responses:
+        '200':
+          description: Список событий входа/выхода
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LoginHistoryRecord'
+        '401':
+          description: Неавторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/roles:
+    get:
+      tags: [roles]
+      summary: Список ролей
+      operationId: listRoles
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Список ролей
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RoleRead'
+        '403':
+          description: Только администратор или суперпользователь
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [roles]
+      summary: Создать роль
+      operationId: createRole
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleCreate'
+      responses:
+        '201':
+          description: Роль создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleRead'
+        '403':
+          description: Только администратор или суперпользователь
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Роль с таким именем уже существует
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/roles/{role_id}:
+    patch:
+      tags: [roles]
+      summary: Обновить роль
+      operationId: updateRole
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: role_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleUpdate'
+      responses:
+        '200':
+          description: Роль обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleRead'
+        '404':
+          description: Роль не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Только администратор или суперпользователь
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [roles]
+      summary: Удалить роль
+      operationId: deleteRole
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: role_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Роль удалена
+        '404':
+          description: Роль не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Только администратор или суперпользователь
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/roles/assign:
+    post:
+      tags: [roles]
+      summary: Назначить роль пользователю
+      operationId: assignRole
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleAssignment'
+      responses:
+        '204':
+          description: Роль назначена
+        '404':
+          description: Пользователь или роль не найдены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Только администратор или суперпользователь
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/roles/revoke:
+    post:
+      tags: [roles]
+      summary: Отобрать роль у пользователя
+      operationId: revokeRole
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleAssignment'
+      responses:
+        '204':
+          description: Роль отобрана
+        '404':
+          description: Пользователь или роль не найдены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Только администратор или суперпользователь
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/permissions/check:
+    post:
+      tags: [permissions]
+      summary: Проверка прав пользователя
+      operationId: checkPermissions
+      description: >
+        Может вызываться:
+        - администратором/суперпользователем по JWT
+        - внутренними сервисами по заголовку x-internal-api-key (без JWT)
+      security:
+        - bearerAuth: []
+        - internalApiKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PermissionCheckRequest'
+      responses:
+        '200':
+          description: Результат проверки прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionCheckResponse'
+        '404':
+          description: Пользователь не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Только администратор/суперпользователь или внутренний сервис с ключом
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/oauth/{provider}/login:
+    get:
+      tags: [oauth]
+      summary: Начать вход через OAuth провайдера
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            example: yandex
+        - name: next
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect на страницу OAuth провайдера
+
+  /api/v1/oauth/{provider}/callback:
+    get:
+      tags: [oauth]
+      summary: Callback OAuth провайдера (обмен code на токены Auth-сервиса)
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            example: yandex
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Пара access/refresh токенов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPair'
+        '400':
+          description: Некорректный state или параметры
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Ошибка OAuth обмена или userinfo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: OAuth не сконфигурирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+    internalApiKey:
+      type: apiKey
+      in: header
+      name: x-internal-api-key
+
+  schemas:
+    UserCreate:
+      type: object
+      required: [login, password]
+      properties:
+        login:
+          type: string
+        password:
+          type: string
+          format: password
+          minLength: 6
+
+    UserRead:
+      type: object
+      required: [id, login]
+      properties:
+        id:
+          type: string
+          format: uuid
+        login:
+          type: string
+
+    UserProfile:
+      type: object
+      required: [id, login, roles, is_superuser]
+      properties:
+        id:
+          type: string
+          format: uuid
+        login:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+        is_superuser:
+          type: boolean
+
+    UserUpdate:
+      type: object
+      properties:
+        login:
+          type: string
+          nullable: true
+        old_password:
+          type: string
+          format: password
+          nullable: true
+        new_password:
+          type: string
+          format: password
+          nullable: true
+
+    LoginRequest:
+      type: object
+      required: [login, password]
+      properties:
+        login:
+          type: string
+        password:
+          type: string
+          format: password
+
+    LoginHistoryRecord:
+      type: object
+      required: [login_at, action]
+      properties:
+        login_at:
+          type: string
+          format: date-time
+        user_agent:
+          type: string
+          nullable: true
+        client_ip:
+          type: string
+          nullable: true
+        action:
+          type: string
+          description: login | refresh | logout | logout_all
+
+    TokenPair:
+      type: object
+      required: [access_token, refresh_token, token_type, expires_in]
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        token_type:
+          type: string
+          example: bearer
+        expires_in:
+          type: integer
+          description: Время жизни access-токена в секундах
+
+    RoleCreate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+
+    RoleUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+
+    RoleRead:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+
+    RoleAssignment:
+      type: object
+      required: [user_id, role_name]
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        role_name:
+          type: string
+
+    PermissionCheckRequest:
+      type: object
+      required: [user_id, required_roles]
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        required_roles:
+          type: array
+          items:
+            type: string
+        require_all:
+          type: boolean
+          default: false
+
+    PermissionCheckResponse:
+      type: object
+      required: [allowed, reason]
+      properties:
+        allowed:
+          type: boolean
+        reason:
+          type: string
+
+    ErrorResponse:
+      type: object
+      required: [detail]
+      properties:
+        detail:
+          type: string

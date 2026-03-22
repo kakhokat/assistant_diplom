@@ -1,0 +1,227 @@
+networks:
+  cinema_net:
+
+volumes:
+  es_data:
+  auth_pg_data:
+  auth_redis_data:
+  async_redis_data:
+  assistant_redis_data:
+  mongo_data:
+  ollama_data:
+
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200 >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    networks: [cinema_net]
+    restart: unless-stopped
+
+  auth_postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${AUTH_DB_NAME}
+      POSTGRES_USER: ${AUTH_DB_USER}
+      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD}
+    volumes:
+      - auth_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${AUTH_DB_USER} -d ${AUTH_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    networks: [cinema_net]
+    restart: unless-stopped
+
+  auth_redis:
+    image: redis:7.2-alpine
+    command: ["sh", "-c", "exec redis-server --appendonly yes"]
+    volumes:
+      - auth_redis_data:/data
+    networks: [cinema_net]
+    restart: unless-stopped
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.47.0
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    networks: [cinema_net]
+    restart: unless-stopped
+
+  auth_api:
+    build: ./services/auth
+    env_file:
+      - ./services/auth/.env
+    depends_on:
+      auth_postgres:
+        condition: service_healthy
+      auth_redis:
+        condition: service_started
+      jaeger:
+        condition: service_started
+    networks: [cinema_net]
+    restart: unless-stopped
+
+  async_redis:
+    image: redis:7.2-alpine
+    command: ["sh", "-c", "exec redis-server --appendonly yes"]
+    volumes:
+      - async_redis_data:/data
+    networks: [cinema_net]
+    restart: unless-stopped
+
+  es_init:
+    profiles: ["init"]
+    build: ./services/async_api
+    environment:
+      - ELASTIC_URL=http://elasticsearch:9200
+      - ES_INDEX_FILMS=movies
+      - ES_INDEX_GENRES=genres
+      - ES_INDEX_PERSONS=persons
+      - ES_WAIT_TIMEOUT=60
+    command: ["python", "scripts/es_load.py"]
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks: [cinema_net]
+    restart: "no"
+
+  async_api:
+    build: ./services/async_api
+    env_file:
+      - ./services/async_api/.env
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      async_redis:
+        condition: service_started
+    expose:
+      - "8000"
+    networks: [cinema_net]
+    restart: unless-stopped
+
+  async_nginx:
+    image: nginx:1.27-alpine
+    depends_on:
+      - async_api
+    volumes:
+      - ./services/async_api/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./services/async_api/nginx/conf.d:/etc/nginx/conf.d:ro
+    networks: [cinema_net]
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:7
+    volumes:
+      - mongo_data:/data/db
+    networks: [cinema_net]
+    restart: unless-stopped
+
+  ugc_api:
+    build: ./services/ugc/services/ugc_api
+    env_file: ./services/ugc/.env
+    environment:
+      MONGO_URI: mongodb://mongodb:27017
+      MONGO_DB: ugc
+      ROOT_PATH: /ugc
+    depends_on:
+      - mongodb
+    expose:
+      - "8002"
+    networks: [cinema_net]
+    restart: unless-stopped
+
+  ugc_nginx:
+    image: nginx:1.27-alpine
+    volumes:
+      - ./services/ugc/services/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - ugc_api
+    networks: [cinema_net]
+    restart: unless-stopped
+
+
+  ollama:
+    image: ollama/ollama:latest
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+    volumes:
+      - ollama_data:/root/.ollama
+    expose:
+      - "11434"
+    networks: [cinema_net]
+    restart: unless-stopped
+
+
+  assistant_redis:
+    image: redis:7.2-alpine
+    command: ["sh", "-c", "exec redis-server --appendonly yes"]
+    volumes:
+      - assistant_redis_data:/data
+    expose:
+      - "6379"
+    networks: [cinema_net]
+    restart: unless-stopped
+
+  assistant_api:
+    build: ./services/assistant
+    env_file:
+      - ./services/assistant/.env
+    depends_on:
+      auth_api:
+        condition: service_started
+      async_nginx:
+        condition: service_started
+      ugc_nginx:
+        condition: service_started
+      assistant_redis:
+        condition: service_started
+      ollama:
+        condition: service_started
+    expose:
+      - "8003"
+    networks: [cinema_net]
+    restart: unless-stopped
+
+
+  frontend_demo:
+    build: ./services/frontend_demo
+    expose:
+      - "80"
+    networks: [cinema_net]
+    restart: unless-stopped
+
+  gateway_nginx:
+    image: nginx:1.27-alpine
+    volumes:
+      - ./gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "${GATEWAY_HTTP_PORT:-80}:80"
+    depends_on:
+      auth_api:
+        condition: service_started
+      async_nginx:
+        condition: service_started
+      ugc_nginx:
+        condition: service_started
+      assistant_redis:
+        condition: service_started
+      ollama:
+        condition: service_started
+      assistant_api:
+        condition: service_started
+      frontend_demo:
+        condition: service_started
+    networks: [cinema_net]
+    restart: unless-stopped

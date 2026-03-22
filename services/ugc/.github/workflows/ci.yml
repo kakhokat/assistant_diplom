@@ -1,0 +1,145 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "develop", "feature/**"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Lint + Types + Tests (py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    services:
+      mongo:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd="mongosh --quiet --eval 'db.adminCommand({ ping: 1 }).ok' | grep 1"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=12
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+
+          # runtime deps (твой проект)
+          pip install -r services/api/requirements.txt
+          pip install -r services/etl/requirements.txt
+          pip install -r services/ugc_api/requirements.txt
+
+          # tooling deps
+          pip install black isort mypy
+          pip install flake8 wemake-python-styleguide flake8-html
+
+          # tests deps
+          pip install pytest pytest-asyncio "httpx>=0.24"
+
+      - name: Black (check)
+        run: black --check .
+
+      - name: isort (check)
+        run: isort --check-only .
+
+      - name: Lint (wemake) -> HTML report
+        run: |
+          mkdir -p artifacts/flake8-html
+          flake8 . --format=html --htmldir=artifacts/flake8-html
+
+      - name: Upload flake8 HTML report
+        uses: actions/upload-artifact@v4
+        with:
+          name: flake8-html-py${{ matrix.python-version }}
+          path: artifacts/flake8-html
+
+      - name: mypy (type check) per service
+        run: |
+          pushd services/api
+          mypy app
+          popd
+
+          pushd services/etl
+          mypy app
+          popd
+
+          pushd services/ugc_api
+          mypy app
+          popd
+
+      - name: Wait for Mongo (extra safety)
+        env:
+          MONGO_URI: mongodb://localhost:27017
+          MONGO_DB: ugc_test
+        run: |
+          python - << 'PY'
+          import os, time
+          from pymongo import MongoClient
+          uri = os.environ["MONGO_URI"]
+          t0 = time.time()
+          last = None
+          while time.time() - t0 < 60:
+            try:
+              c = MongoClient(uri, serverSelectionTimeoutMS=1000)
+              c.admin.command("ping")
+              print("Mongo is ready")
+              raise SystemExit(0)
+            except Exception as e:
+              last = e
+              time.sleep(1)
+          raise SystemExit(f"Mongo not ready: {last}")
+          PY
+
+      - name: pytest
+        env:
+          MONGO_URI: mongodb://localhost:27017
+          MONGO_DB: ugc_test
+        run: pytest -q
+
+      - name: compileall
+        run: python -m compileall -q .
+
+  notify:
+    name: Notify Telegram (success)
+    runs-on: ubuntu-latest
+    needs: [checks]
+    if: ${{ success() }}
+
+    steps:
+      - name: Send Telegram message
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          message: |
+            ✅ CI SUCCESS
+            Repo: ${{ github.repository }}
+            PR:  ${{ github.event.pull_request.html_url }}
+            By:  ${{ github.actor }}
+            SHA: ${{ github.sha }}
+            Workflow: ${{ github.workflow }}

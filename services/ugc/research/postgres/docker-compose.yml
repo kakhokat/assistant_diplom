@@ -1,0 +1,23 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: pg_ugc
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: ugc
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d ugc"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+    volumes:
+      - pg_ugc_data:/var/lib/postgresql/data
+
+volumes:
+  pg_ugc_data:

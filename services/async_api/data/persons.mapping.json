@@ -1,0 +1,29 @@
+{
+  "mappings": {
+    "properties": {
+      "id": {
+        "type": "keyword"
+      },
+      "full_name": {
+        "type": "text"
+      },
+      "aliases": {
+        "type": "text"
+      },
+      "films": {
+        "type": "nested",
+        "properties": {
+          "uuid": {
+            "type": "keyword"
+          },
+          "title": {
+            "type": "text"
+          },
+          "roles": {
+            "type": "keyword"
+          }
+        }
+      }
+    }
+  }
+}

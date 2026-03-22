@@ -1,0 +1,6 @@
+.\.venv\Scripts\activate
+
+black services
+isort services
+mypy services
+flake8 services

@@ -1,0 +1,25 @@
+# env
+.env
+
+# python
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# virtualenv
+.venv/
+venv/
+
+# logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+collect.py
+other_files_dump.txt
+python_files_dump.txt
+repo_dump.txt

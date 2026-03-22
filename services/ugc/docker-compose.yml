@@ -1,0 +1,30 @@
+services:
+  mongodb:
+    image: mongo:7
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    restart: unless-stopped
+
+  ugc_api:
+    build: ./services/ugc_api
+    env_file: .env
+    environment:
+      MONGO_URI: mongodb://mongodb:27017
+      MONGO_DB: ugc
+      ROOT_PATH: /ugc
+    ports:
+      - "8002:8002"
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1.27
+    volumes:
+      - ./services/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80"
+    depends_on:
+      - ugc_api
+    restart: unless-stopped

@@ -1,0 +1,7 @@
+pytest>=8.3.3
+pluggy>=1.5
+pytest-asyncio>=0.23.8
+pytest-cov>=5.0.0
+pytest-xdist>=3.6.1
+pytest-pythonpath
+requests==2.32.3

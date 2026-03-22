@@ -1,0 +1,39 @@
+{
+  "mappings": {
+    "properties": {
+      "id": {
+        "type": "keyword"
+      },
+      "title": {
+        "type": "text"
+      },
+      "original_title": {
+        "type": "text"
+      },
+      "title_aliases": {
+        "type": "text"
+      },
+      "description": {
+        "type": "text"
+      },
+      "imdb_rating": {
+        "type": "float"
+      },
+      "genre": {
+        "type": "keyword"
+      },
+      "runtime_minutes": {
+        "type": "integer"
+      },
+      "directors": {
+        "type": "text"
+      },
+      "actors": {
+        "type": "text"
+      },
+      "writers": {
+        "type": "text"
+      }
+    }
+  }
+}

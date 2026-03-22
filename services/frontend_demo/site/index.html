@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Демо голосового ассистента Practix</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <div class="brand">PRACTIX</div>
+        <form id="search-form" class="searchbar">
+          <input id="search-input" type="text" placeholder="Искать фильмы, актёров, жанры..." autocomplete="off" />
+          <button id="search-submit-btn" type="submit" disabled>Найти</button>
+        </form>
+        <div class="account-panel">
+          <span id="user-status" class="user-status">Гость</span>
+          <button id="login-open-btn" class="secondary-btn" type="button">Войти</button>
+          <button id="logout-btn" class="secondary-btn hidden" type="button">Выйти</button>
+        </div>
+      </header>
+
+      <main class="content-grid">
+        <section class="panel panel-catalog">
+          <div class="panel-header">
+            <div>
+              <h2 id="catalog-title">Каталог</h2>
+              <div id="catalog-subtitle" class="panel-subtitle">Показываем полноценные страницы каталога, а не фиксированные 8 карточек.</div>
+            </div>
+            <div class="panel-actions">
+              <span id="catalog-meta" class="muted">Загружаю каталог…</span>
+              <button id="catalog-reset-btn" class="secondary-btn hidden" type="button">Сбросить</button>
+            </div>
+          </div>
+
+          <div class="catalog-toolbar">
+            <span id="catalog-mode-chip" class="mode-chip">Каталог</span>
+            <div class="catalog-controls">
+              <label class="catalog-control">
+                <span>Жанр</span>
+                <select id="catalog-genre-select">
+                  <option value="">Все жанры</option>
+                </select>
+              </label>
+              <label class="catalog-control">
+                <span>На странице</span>
+                <select id="catalog-page-size-select">
+                  <option value="12">12</option>
+                  <option value="24" selected>24</option>
+                  <option value="48">48</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <div id="catalog-results" class="result-grid empty-state">
+            Здесь появятся фильмы каталога.
+          </div>
+
+          <div class="catalog-pagination">
+            <button id="catalog-prev-btn" class="secondary-btn" type="button">← Назад</button>
+            <span id="catalog-page-info" class="muted">Страница 1</span>
+            <button id="catalog-next-btn" class="secondary-btn" type="button">Вперёд →</button>
+          </div>
+
+          <section id="personal-section" class="personal-section hidden">
+            <div class="section-header">
+              <div>
+                <h3>Персональный раздел</h3>
+                <div class="panel-subtitle">Доступен только после входа. Здесь ваши закладки и лайки.</div>
+              </div>
+              <span id="personal-status" class="muted">Скрыто</span>
+            </div>
+
+            <div class="personal-grid">
+              <div class="sidebar-section">
+                <div class="label">Мои закладки</div>
+                <div id="personal-bookmarks" class="sidebar-list empty-state">Войдите, чтобы видеть закладки.</div>
+              </div>
+
+              <div class="sidebar-section">
+                <div class="label">Мои лайки</div>
+                <div id="personal-likes" class="sidebar-list empty-state">Войдите, чтобы видеть лайки.</div>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <section class="panel panel-assistant">
+          <div class="panel-header">
+            <div>
+              <h2>Голосовой ассистент</h2>
+              <div class="panel-subtitle">Можно ввести вопрос вручную или нажать кнопку микрофона.</div>
+            </div>
+            <span id="assistant-status" class="muted">Готов</span>
+          </div>
+
+          <div class="assistant-block transcript-block">
+            <div class="label">Распознанный текст</div>
+            <div id="transcript-output" class="transcript-output">Нажмите «Говорить с ассистентом» или введите запрос ниже.</div>
+          </div>
+
+          <div class="assistant-block action-block">
+            <div class="action-header">
+              <div class="label inline-label">Текстовый запрос</div>
+              <div class="action-hint">Кнопка станет активной, когда вы что-нибудь введёте.</div>
+            </div>
+            <label class="voice-toggle">
+              <input id="voice-toggle" type="checkbox" checked />
+              <span>Озвучивать ответы ассистента</span>
+            </label>
+            <div class="assistant-actions">
+              <input id="assistant-query" type="text" placeholder="Например: кто снял фильм «Тихая Луна»?" />
+              <button id="assistant-ask-btn" type="button" disabled>Спросить ассистента</button>
+            </div>
+          </div>
+
+          <div class="assistant-block answer-block">
+            <div class="answer-header">
+              <div class="label">Ответ ассистента</div>
+              <button id="assistant-repeat-btn" class="secondary-btn hidden" type="button">Ещё вариант</button>
+            </div>
+            <div id="assistant-answer" class="assistant-answer">Здесь появится ответ ассистента.</div>
+          </div>
+
+          <div class="assistant-block result-block">
+            <div class="label">Структурированный результат</div>
+            <pre id="assistant-result" class="assistant-result">{}</pre>
+          </div>
+
+          <div class="assistant-block examples-block">
+            <div class="label">Примеры запросов</div>
+            <div id="example-chips" class="example-chips"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <button id="talk-btn" class="talk-btn" type="button">🎤 Говорить с ассистентом</button>
+
+    <div id="login-modal" class="modal hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>Вход</h3>
+          <button id="login-close-btn" class="icon-btn" type="button">✕</button>
+        </div>
+        <form id="login-form" class="modal-form">
+          <label>
+            Логин
+            <input id="login-input" type="text" required />
+          </label>
+          <label>
+            Пароль
+            <input id="password-input" type="password" required />
+          </label>
+          <button type="submit">Войти</button>
+          <div id="login-error" class="error-text"></div>
+        </form>
+      </div>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

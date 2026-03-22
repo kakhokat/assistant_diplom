@@ -1,0 +1,12 @@
+services:
+  elasticsearch:
+    ports:
+      - "${ELASTIC_HTTP_PORT:-9200}:9200"
+  jaeger:
+    ports:
+      - "${JAEGER_HTTP_PORT:-16686}:16686"
+      - "4317:4317"
+      - "4318:4318"
+
+
+# assistant env (local)
