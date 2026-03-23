@@ -1,8 +1,9 @@
 from contextlib import asynccontextmanager
+import logging
 
 import httpx
 import redis.exceptions as redis_exc
-from fastapi import FastAPI, Header, Query
+from fastapi import Depends, FastAPI, Header, Query, Request
 from fastapi.responses import JSONResponse, ORJSONResponse
 from redis.asyncio import Redis
 
@@ -14,6 +15,8 @@ from domain.models import (
     AssistantResponse,
 )
 from services.assistant import AssistantService, build_assistant_service
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -48,11 +51,12 @@ app = FastAPI(
 
 @app.exception_handler(redis_exc.RedisError)
 async def redis_error_handler(_, exc: redis_exc.RedisError):
+    logger.exception("Assistant redis dependency error", exc_info=exc)
     return JSONResponse(
         status_code=503,
         content={
             "detail": "Assistant redis dependency is unavailable",
-            "reason": str(exc),
+            "reason": "temporary unavailable",
         },
     )
 
@@ -62,9 +66,23 @@ async def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+def get_assistant_service(request: Request) -> AssistantService:
+    return request.app.state.assistant_service
+
+
+async def require_authorized_user(
+    service: AssistantService = Depends(get_assistant_service),
+    authorization: str | None = Header(default=None),
+) -> dict:
+    return await service.auth_client.me(authorization)
+
+
 @app.post("/assistant/api/v1/ask", response_model=AssistantResponse, tags=["assistant"])
-async def ask(payload: AskRequest, authorization: str | None = Header(default=None)):
-    service: AssistantService = app.state.assistant_service
+async def ask(
+    payload: AskRequest,
+    authorization: str | None = Header(default=None),
+    service: AssistantService = Depends(get_assistant_service),
+):
     return await service.handle_query(payload.query, authorization, payload.session_id)
 
 
@@ -73,8 +91,11 @@ async def ask(payload: AskRequest, authorization: str | None = Header(default=No
     response_model=AssistantFeedbackResponse,
     tags=["assistant"],
 )
-async def feedback(payload: AssistantFeedbackRequest):
-    service: AssistantService = app.state.assistant_service
+async def feedback(
+    payload: AssistantFeedbackRequest,
+    service: AssistantService = Depends(get_assistant_service),
+    _current_user: dict = Depends(require_authorized_user),
+):
     return await service.submit_feedback(payload)
 
 
@@ -82,8 +103,8 @@ async def feedback(payload: AssistantFeedbackRequest):
 async def public_feed(
     limit: int = Query(default=8, ge=1, le=20),
     authorization: str | None = Header(default=None),
+    service: AssistantService = Depends(get_assistant_service),
 ):
-    service: AssistantService = app.state.assistant_service
     return await service.public_feed(limit, authorization)
 
 
@@ -91,6 +112,6 @@ async def public_feed(
 async def public_search(
     query: str = Query(min_length=1, max_length=200),
     authorization: str | None = Header(default=None),
+    service: AssistantService = Depends(get_assistant_service),
 ):
-    service: AssistantService = app.state.assistant_service
     return await service.public_search(query, authorization)

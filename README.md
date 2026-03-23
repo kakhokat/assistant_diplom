@@ -90,6 +90,26 @@
 
 ## Запуск
 
+### Быстрый старт
+
+Из корня проекта:
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+
+docker compose down -v --remove-orphans --rmi local
+docker builder prune -af
+docker compose build --no-cache
+docker compose up -d
+
+.\scripts\llm-setup-ollama.ps1
+.\scripts\generate-catalog-dataset.ps1
+docker compose exec async_redis redis-cli FLUSHALL
+docker compose exec assistant_redis redis-cli FLUSHALL
+.\scripts\check-02-auth.ps1
+.\scripts\prepare-demo-user.ps1
+```
+
+Подробнее:
 Из корня проекта:
 
 ```powershell

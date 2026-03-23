@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import random
 from typing import Any, Iterable
 
@@ -8,6 +9,8 @@ import httpx
 from core.capabilities import get_capabilities
 from core.text_tools import normalize_for_match, pick_best_candidate
 from services.query_parser import candidate_queries, extract_explicit_genre_hint
+
+logger = logging.getLogger(__name__)
 
 
 async def prepare_film_cards(
@@ -37,11 +40,14 @@ async def prepare_film_cards(
         )
         prepared.append(
             {
+                **item,
                 "uuid": item.get("uuid"),
-                "title": item.get("title"),
+                "title": item.get("title") or detail.get("title"),
                 "original_title": item.get("original_title")
                 or detail.get("original_title"),
-                "imdb_rating": item.get("imdb_rating"),
+                "imdb_rating": item.get("imdb_rating")
+                if item.get("imdb_rating") is not None
+                else detail.get("imdb_rating"),
                 "genre": genres,
                 "directors": detail.get("directors") or [],
                 "description": detail.get("description"),
@@ -55,7 +61,8 @@ async def format_person_name_for_answer(
 ) -> str:
     try:
         candidates = await service._catalog_search_persons(name, authorization)
-    except Exception:
+    except (httpx.HTTPError, TypeError, ValueError) as exc:
+        logger.warning("Failed to resolve person name %r: %s", name, exc)
         return name
     if not candidates:
         return name

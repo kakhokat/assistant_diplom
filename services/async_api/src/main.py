@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+import logging
 from logging.config import dictConfig
 
 import redis.exceptions as redis_exc
@@ -13,6 +14,8 @@ from api.v1 import films, genres, persons
 from core.logger import LOGGING
 from core.settings import settings
 from db import elastic, redis
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -65,17 +68,19 @@ app.add_middleware(
 
 @app.exception_handler(TransportError)
 async def es_transport_error_handler(_: Request, exc: TransportError):
+    logger.exception("Async API Elasticsearch dependency error", exc_info=exc)
     return JSONResponse(
         status_code=503,
-        content={"detail": "Elasticsearch is unavailable", "reason": str(exc)},
+        content={"detail": "Elasticsearch is unavailable", "reason": "temporary unavailable"},
     )
 
 
 @app.exception_handler(redis_exc.RedisError)
 async def redis_error_handler(_: Request, exc: redis_exc.RedisError):
+    logger.exception("Async API Redis dependency error", exc_info=exc)
     return JSONResponse(
         status_code=503,
-        content={"detail": "Redis is unavailable", "reason": str(exc)},
+        content={"detail": "Redis is unavailable", "reason": "temporary unavailable"},
     )
 
 

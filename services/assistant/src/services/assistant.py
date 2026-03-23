@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import Any
 from uuid import uuid4
 
@@ -48,6 +49,9 @@ from services.session_store import (
     RedisSessionStore,
     SessionStore,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 class AssistantService:
@@ -206,13 +210,19 @@ class AssistantService:
             return response
         except httpx.HTTPStatusError as exc:
             status_code = exc.response.status_code if exc.response is not None else 502
-            detail = exc.response.text if exc.response is not None else str(exc)
+            logger.warning(
+                "Assistant upstream HTTP status error: status=%s path=%s",
+                status_code,
+                str(exc.request.url) if exc.request is not None else "unknown",
+            )
             raise HTTPException(
-                status_code=status_code, detail=f"upstream error: {detail}"
+                status_code=status_code,
+                detail="assistant upstream error",
             ) from exc
         except httpx.HTTPError as exc:
+            logger.warning("Assistant upstream connection error: %s", exc)
             raise HTTPException(
-                status_code=502, detail=f"upstream connection error: {exc}"
+                status_code=502, detail="assistant upstream connection error"
             ) from exc
 
     async def _build_plan(

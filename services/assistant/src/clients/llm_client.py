@@ -1,13 +1,17 @@
 from __future__ import annotations
 
 import json
+import logging
 from typing import Any
 
 import httpx
+from pydantic import ValidationError
 
 from core.capabilities import get_capabilities
 from core.settings import settings
 from domain.llm_models import LlmParseResult
+
+logger = logging.getLogger(__name__)
 
 
 class LocalLlmClient:
@@ -70,8 +74,15 @@ class LocalLlmClient:
             raw = response.json().get("response", "{}")
             payload = json.loads(raw)
             return LlmParseResult.model_validate(payload)
-        except Exception:
-            return None
+        except httpx.HTTPError as exc:
+            logger.warning("LLM request failed: %s", exc)
+        except json.JSONDecodeError as exc:
+            logger.warning("LLM returned invalid JSON: %s", exc)
+        except ValidationError as exc:
+            logger.warning("LLM payload validation failed: %s", exc)
+        except (KeyError, TypeError, ValueError) as exc:
+            logger.warning("LLM response parsing failed: %s", exc)
+        return None
 
     @staticmethod
     def _build_prompt(query: str, session_context: dict[str, Any]) -> str:

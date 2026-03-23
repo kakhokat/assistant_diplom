@@ -127,6 +127,50 @@ class FakeCatalogClient:
                 "directors": ["Артём Белов"],
                 "description": "Спортивная драма.",
             },
+            "film-7": {
+                "uuid": "film-7",
+                "title": "Тайна без рейтинга",
+                "original_title": "Zero Rating Mystery",
+                "title_aliases": ["Zero Rating Mystery"],
+                "imdb_rating": None,
+                "runtime_minutes": 112,
+                "genre": ["genre-thriller"],
+                "directors": ["Нора Вейл"],
+                "description": "Детектив без рейтинга.",
+            },
+            "film-8": {
+                "uuid": "film-8",
+                "title": "Ночной курьер",
+                "original_title": "Night Courier",
+                "title_aliases": ["Night Courier"],
+                "imdb_rating": 7.8,
+                "runtime_minutes": 101,
+                "genre": ["genre-thriller"],
+                "directors": ["Игорь Север"],
+                "description": "Ночная доставка чужих тайн.",
+            },
+            "film-9": {
+                "uuid": "film-9",
+                "title": "Северный ветер",
+                "original_title": "North Wind",
+                "title_aliases": ["North Wind"],
+                "imdb_rating": 7.1,
+                "runtime_minutes": 104,
+                "genre": ["genre-drama"],
+                "directors": ["Игорь Север"],
+                "description": "Дорога, снег и выбор.",
+            },
+            "film-10": {
+                "uuid": "film-10",
+                "title": "Полуночный маршрут",
+                "original_title": "Midnight Route",
+                "title_aliases": ["Midnight Route"],
+                "imdb_rating": 6.9,
+                "runtime_minutes": 99,
+                "genre": ["genre-thriller"],
+                "directors": ["Игорь Север"],
+                "description": "Напряжённая ночная поездка.",
+            },
         }
         self.genre_names = {
             "genre-sci-fi": {
@@ -153,15 +197,52 @@ class FakeCatalogClient:
                     "aliases": ["Luna Silver"],
                 },
             ],
+            "Игорь Север": [
+                {
+                    "uuid": "person-2",
+                    "full_name": "Игорь Север",
+                    "aliases": ["Igor Sever"],
+                },
+            ],
         }
         self.person_details_map = {
             "person-1": {
                 "uuid": "person-1",
                 "full_name": "Луна Сильвер",
                 "films": [
-                    {"uuid": "film-1", "title": "Тихая Луна"},
-                    {"uuid": "film-2", "title": "Лунар: Серебряная звезда"},
-                    {"uuid": "film-3", "title": "Красный маяк"},
+                    {"uuid": "film-1", "title": "Тихая Луна", "roles": ["director"]},
+                    {"uuid": "film-2", "title": "Лунар: Серебряная звезда", "roles": ["director"]},
+                    {"uuid": "film-3", "title": "Красный маяк", "roles": ["writer"]},
+                ],
+            },
+            "person-2": {
+                "uuid": "person-2",
+                "full_name": "Игорь Север",
+                "films": [
+                    {
+                        "uuid": "film-7",
+                        "title": "Тайна без рейтинга",
+                        "imdb_rating": None,
+                        "roles": ["actor"],
+                    },
+                    {
+                        "uuid": "film-8",
+                        "title": "Ночной курьер",
+                        "imdb_rating": 7.8,
+                        "roles": ["director"],
+                    },
+                    {
+                        "uuid": "film-9",
+                        "title": "Северный ветер",
+                        "imdb_rating": 7.1,
+                        "roles": ["director", "writer"],
+                    },
+                    {
+                        "uuid": "film-10",
+                        "title": "Полуночный маршрут",
+                        "imdb_rating": 6.9,
+                        "roles": ["director"],
+                    },
                 ],
             },
         }
@@ -542,3 +623,115 @@ def test_feedback_is_recorded_for_offline_learning() -> None:
     assert feedback_store.events
     assert feedback_store.events[0]["reaction"] == "up"
     assert feedback_store.events[0]["intent"] == "film_director"
+
+
+def test_detects_filmography_for_kakie_filmy_snyal_without_llm() -> None:
+    service, _, _, _, _ = build_service()
+
+    response = asyncio.run(
+        service.handle_query(
+            "какие фильмы снял Игорь Север?",
+            authorization=None,
+            session_id="sess-16",
+        )
+    )
+
+    assert response.intent == "person_filmography"
+    assert response.metadata["plan_source"] == "deterministic"
+    assert "Фильмы режиссёра Игорь Север" in response.answer_text
+    assert "Ночной курьер" in response.answer_text
+    assert "Северный ветер" in response.answer_text
+    assert "Полуночный маршрут" in response.answer_text
+    assert "Тайна без рейтинга" not in response.answer_text
+
+
+def test_followup_overview_uses_session_for_o_chem_etot_film() -> None:
+    shared_store = FakeSessionStore()
+    service, _, _, _, _ = build_service(session_store=shared_store)
+
+    asyncio.run(
+        service.handle_query(
+            "кто режиссёр фильма Тихая Луна?",
+            authorization=None,
+            session_id="sess-17",
+        )
+    )
+    response = asyncio.run(
+        service.handle_query(
+            "о чем этот фильм?",
+            authorization=None,
+            session_id="sess-17",
+        )
+    )
+
+    assert response.intent == "film_overview"
+    assert response.metadata["plan_source"] == "deterministic"
+    assert response.result["title"] == "Тихая Луна (Silent Moon)"
+    assert "Краткая сводка" in response.answer_text
+
+
+def test_recommend_by_person_uses_film_details_and_omits_rating_labels_in_text() -> None:
+    service, _, _, _, _ = build_service()
+
+    response = asyncio.run(
+        service.handle_query(
+            'посоветуй фильмы режиссёра "Луна Сильвер"',
+            authorization=None,
+            session_id="sess-18",
+        )
+    )
+
+    assert response.intent == "recommend_by_person"
+    assert "Тихая Луна" in response.answer_text
+    assert "Лунар: Серебряная звезда" in response.answer_text
+    assert "без рейтинга IMDb" not in response.answer_text
+    assert "n/a" not in response.answer_text.lower()
+    assert response.result["items"][0]["imdb_rating"] == 8.1
+    assert response.result["items"][1]["imdb_rating"] == 7.8
+
+
+def test_detects_feminine_person_filmography_without_llm() -> None:
+    service, _, _, _, _ = build_service()
+
+    response = asyncio.run(
+        service.handle_query(
+            "что еще сняла Луна Сильвер?",
+            authorization=None,
+            session_id="sess-19",
+        )
+    )
+
+    assert response.intent == "person_filmography"
+    assert response.metadata["plan_source"] == "deterministic"
+    assert "Фильмы режиссёра Луна Сильвер" in response.answer_text
+    assert "Тихая Луна" in response.answer_text
+    assert "Лунар: Серебряная звезда" in response.answer_text
+    assert "Красный маяк" not in response.answer_text
+
+
+def test_detects_filmy_s_uchastiem_without_llm() -> None:
+    service, _, _, _, _ = build_service()
+
+    response = asyncio.run(
+        service.handle_query(
+            "фильмы с участием Луна Сильвер",
+            authorization=None,
+            session_id="sess-20",
+        )
+    )
+
+    assert response.intent == "person_filmography"
+    assert response.metadata["plan_source"] == "deterministic"
+    assert "У меня нет данных о фильмах с участием Луна Сильвер." == response.answer_text
+
+
+
+def test_public_search_cards_fill_rating_from_film_details() -> None:
+    service, _, catalog_client, _, _ = build_service()
+
+    items = asyncio.run(service.public_search("Луна", authorization=None))
+
+    by_title = {item["title"]: item for item in items}
+
+    assert by_title["Тихая Луна"]["imdb_rating"] == catalog_client.film_details_map["film-1"]["imdb_rating"]
+    assert by_title["Лунар: Серебряная звезда"]["imdb_rating"] == catalog_client.film_details_map["film-2"]["imdb_rating"]

@@ -4,6 +4,7 @@ from collections import Counter
 from typing import Any
 
 from core.settings import settings
+from core.text_tools import normalize_for_match
 from services.entity_resolver import (
     display_title,
     format_person_names_for_answer,
@@ -21,6 +22,104 @@ from services.query_parser import (
     extract_film_title_with_context,
     extract_person_name_with_context,
 )
+
+
+def format_rating_label(value: Any) -> str:
+    return f"(IMDb {value})" if value is not None else ""
+
+
+def infer_person_role_hint(query: str) -> str | None:
+    text = normalize_for_match(query)
+    if any(
+        token in text
+        for token in [
+            " снял",
+            " сняла",
+            " режиссер",
+            " режиссёр",
+            " поставил",
+            " поставила",
+        ]
+    ):
+        return "director"
+    if any(token in text for token in [" сценар", " автор "]):
+        return "writer"
+    if any(
+        token in text
+        for token in [" с участием", " актер", " актёр", " снимался", " в ролях"]
+    ):
+        return "actor"
+    return None
+
+
+def merge_person_filmography_items(films: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    merged: dict[str, dict[str, Any]] = {}
+    ordered_ids: list[str] = []
+    for item in films:
+        film_id = str(item.get("uuid") or "")
+        if not film_id:
+            continue
+        if film_id not in merged:
+            merged[film_id] = {**item, "roles": list(item.get("roles") or [])}
+            ordered_ids.append(film_id)
+            continue
+        current_roles = list(merged[film_id].get("roles") or [])
+        for role in item.get("roles") or []:
+            if role not in current_roles:
+                current_roles.append(role)
+        merged[film_id]["roles"] = current_roles
+    return [merged[film_id] for film_id in ordered_ids]
+
+
+def filter_person_filmography(films: list[dict[str, Any]], role_hint: str | None) -> list[dict[str, Any]]:
+    merged = merge_person_filmography_items(films)
+    if role_hint is None:
+        return merged
+    return [item for item in merged if role_hint in (item.get("roles") or [])]
+
+
+def build_person_filmography_answer(name: str, titles: str, role_hint: str | None) -> str:
+    if role_hint == "director":
+        return f"Фильмы режиссёра {name}: {titles}."
+    if role_hint == "actor":
+        return f"Фильмы с участием {name}: {titles}."
+    if role_hint == "writer":
+        return f"Фильмы по сценариям {name}: {titles}."
+    return f"В фильмографии {name}: {titles}."
+
+
+def build_empty_person_filmography_answer(name: str, role_hint: str | None) -> str:
+    if role_hint == "director":
+        return f"У меня нет данных о фильмах режиссёра {name}."
+    if role_hint == "actor":
+        return f"У меня нет данных о фильмах с участием {name}."
+    if role_hint == "writer":
+        return f"У меня нет данных о фильмах по сценариям {name}."
+    return f"У меня нет фильмографии для {name}."
+
+
+def build_empty_person_recommendation_answer(name: str, role_hint: str | None) -> str:
+    if role_hint == "director":
+        return f"У меня пока нет фильмов режиссёра {name}, которые можно рекомендовать."
+    if role_hint == "actor":
+        return f"У меня пока нет фильмов с участием {name}, которые можно рекомендовать."
+    if role_hint == "writer":
+        return f"У меня пока нет фильмов по сценариям {name}, которые можно рекомендовать."
+    return f"У меня пока нет фильмов, чтобы рекомендовать по {name}."
+
+
+def format_film_list(items: list[dict[str, Any]]) -> str:
+    return ", ".join(title for item in items if (title := display_title(item)))
+
+
+def build_person_recommendation_intro(name: str, role_hint: str | None) -> str:
+    if role_hint == "director":
+        return f"Могу предложить фильмы режиссёра {name}: "
+    if role_hint == "actor":
+        return f"Могу предложить фильмы с участием {name}: "
+    if role_hint == "writer":
+        return f"Могу предложить фильмы по сценариям {name}: "
+    return f"Могу предложить фильмы с участием или от {name}: "
 
 
 async def handle_film_query(
@@ -311,7 +410,8 @@ async def handle_person_filmography(
             return cached
 
     detail = await service._catalog_person_details(person["uuid"], authorization)
-    films = detail.get("films") or []
+    role_hint = infer_person_role_hint(query)
+    films = filter_person_filmography(detail.get("films") or [], role_hint)
     matched_name = detail.get("full_name", raw_name)
     remember(
         session,
@@ -321,7 +421,7 @@ async def handle_person_filmography(
         },
     )
     if not films:
-        answer = f"У меня нет фильмографии для {matched_name}."
+        answer = build_empty_person_filmography_answer(matched_name, role_hint)
     else:
         film_details = await load_film_details(
             service,
@@ -336,7 +436,7 @@ async def handle_person_filmography(
             for item in films[:5]
             if display_title(details_by_id.get(item.get("uuid")) or item)
         )
-        answer = f"У {matched_name} есть такие фильмы: {titles}."
+        answer = build_person_filmography_answer(matched_name, titles, role_hint)
     return service._response(
         query=query,
         session_id=session_id,
@@ -526,7 +626,7 @@ async def handle_recommend_by_genre(
             result={"type": "recommendations", "genre": genre_name, "items": []},
         )
     items = ", ".join(
-        f"{display_title(item)} ({item.get('imdb_rating', 'n/a')})"
+        f"{display_title(item)} {format_rating_label(item.get('imdb_rating'))}"
         for item in recommended
     )
     answer = f"Похоже, вам нравится жанр {genre_name}. Могу предложить: {items}."
@@ -640,7 +740,8 @@ async def handle_recommend_by_person(
             alternatives=alternatives,
         )
     detail = await service._catalog_person_details(person["uuid"], authorization)
-    films = detail.get("films") or []
+    role_hint = infer_person_role_hint(query)
+    films = filter_person_filmography(detail.get("films") or [], role_hint)
     matched_name = detail.get("full_name", raw_name)
     remember(
         session,
@@ -650,21 +751,29 @@ async def handle_recommend_by_person(
         },
     )
     if not films:
-        answer = f"У меня пока нет фильмов, чтобы рекомендовать по {matched_name}."
+        answer = build_empty_person_recommendation_answer(matched_name, role_hint)
         items: list[dict[str, Any]] = []
     else:
+        film_details = await load_film_details(
+            service,
+            [item.get("uuid") for item in films if item.get("uuid")],
+            authorization,
+        )
+        details_by_id = {
+            str(item.get("uuid")): item for item in film_details if item.get("uuid")
+        }
+        merged_items: list[dict[str, Any]] = []
+        for item in films:
+            film_id = str(item.get("uuid") or "")
+            detail = details_by_id.get(film_id, {})
+            merged_items.append({**item, **detail} if detail else dict(item))
         sorted_films = sorted(
-            films, key=lambda item: item.get("imdb_rating") or 0, reverse=True
+            merged_items, key=lambda item: item.get("imdb_rating") or 0, reverse=True
         )
         items = sorted_films[: settings.RECOMMENDATION_LIMIT]
-        answer = (
-            f"Могу предложить фильмы с участием или от {matched_name}: "
-            + ", ".join(
-                f"{display_title(item)} ({item.get('imdb_rating', 'n/a')})"
-                for item in items
-            )
-            + "."
-        )
+        answer = build_person_recommendation_intro(
+            matched_name, role_hint
+        ) + format_film_list(items) + "."
     return service._response(
         query=query,
         session_id=session_id,
