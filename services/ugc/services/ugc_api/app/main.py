@@ -2,25 +2,23 @@ from __future__ import annotations
 
 import logging
 import os
-
 from contextlib import asynccontextmanager
 from typing import TypedDict
 
 import sentry_sdk
-
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from prometheus_client import make_asgi_app
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 
-from .constants import ENV_GIT_SHA
-from .constants import ENV_SENTRY_DSN
-from .constants import ENV_SENTRY_ENVIRONMENT
-from .constants import ENV_SENTRY_PROFILES_SAMPLE_RATE
-from .constants import ENV_SENTRY_TRACES_SAMPLE_RATE
-from .db import close_client
-from .db import get_client
-from .db import get_db
+from .constants import (
+    ENV_GIT_SHA,
+    ENV_SENTRY_DSN,
+    ENV_SENTRY_ENVIRONMENT,
+    ENV_SENTRY_PROFILES_SAMPLE_RATE,
+    ENV_SENTRY_TRACES_SAMPLE_RATE,
+)
+from .db import close_client, get_client, get_db
 from .repositories.bookmarks_repo import BookmarksRepo
 from .repositories.likes_repo import LikesRepo
 from .repositories.reviews_repo import ReviewsRepo

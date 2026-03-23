@@ -1,30 +1,3 @@
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
-
-[tool.black]
-line-length = 88
-target-version = ["py311"]
-skip-string-normalization = false
-
-[tool.isort]
-profile = "black"
-line_length = 88
-src_paths = ["src"]
-known_first_party = [
-    "api",
-    "core",
-    "db",
-    "domain",
-    "infrastructure",
-    "services",
-    "cli",
-    "main",
-]
-default_section = "THIRDPARTY"
-force_single_line = true
-combine_as_imports = false
-order_by_type = true
-case_sensitive = false
-no_lines_before = ["LOCALFOLDER"]
-lines_between_types = 1

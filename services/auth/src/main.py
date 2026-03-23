@@ -2,25 +2,19 @@ from contextlib import asynccontextmanager
 from logging.config import dictConfig
 
 from fastapi import FastAPI
-from fastapi.responses import ORJSONResponse
-from fastapi.responses import RedirectResponse
+from fastapi.responses import ORJSONResponse, RedirectResponse
 from redis.asyncio import Redis
 from starlette.middleware.cors import CORSMiddleware
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
-from api.v1 import auth
-from api.v1 import oauth
-from api.v1 import roles
-from api.v1 import users
+from api.v1 import auth, oauth, roles, users
+from core.bootstrap import ensure_bootstrap_admin
 from core.logger import LOGGING
 from core.middleware.rate_limit import RateLimitMiddleware
 from core.middleware.request_id import RequestIdMiddleware
 from core.settings import settings
-from core.bootstrap import ensure_bootstrap_admin
-from core.tracing import setup_tracing
-from core.tracing import shutdown_tracing
-from db import postgres
-from db import redis as redis_db
+from core.tracing import setup_tracing, shutdown_tracing
+from db import postgres, redis as redis_db
 
 
 @asynccontextmanager

@@ -1,17 +1,12 @@
 from typing import List
 from uuid import UUID
 
-from fastapi import Depends
-from fastapi import HTTPException
-from fastapi import status
+from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.security import hash_password
-from core.security import verify_password
+from core.security import hash_password, verify_password
 from db.postgres import get_session
-from domain.models.user import LoginHistoryRecord
-from domain.models.user import UserProfile
-from domain.models.user import UserUpdate
+from domain.models.user import LoginHistoryRecord, UserProfile, UserUpdate
 from infrastructure.postgres.role_repo import RoleRepo
 from infrastructure.postgres.token_repo import TokenRepo
 from infrastructure.postgres.user_repo import UserRepo

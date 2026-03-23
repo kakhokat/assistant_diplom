@@ -2,17 +2,11 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from fastapi import APIRouter
-from fastapi import Depends
-from fastapi import HTTPException
-from fastapi import Path
-from fastapi import Request
-from fastapi import status
+from fastapi import APIRouter, Depends, HTTPException, Path, Request, status
 from fastapi.responses import RedirectResponse
 
 from domain.models.tokens import TokenPair
-from services.auth import AuthService
-from services.auth import get_auth_service
+from services.auth import AuthService, get_auth_service
 from services.oauth_yandex import YandexOAuthService
 
 router = APIRouter()

@@ -18,9 +18,7 @@ def test_person_details_found(client):
 
 
 def test_persons_search(client):
-    r = client.get(
-        "/api/v1/persons/search?query=Alex&page_number=1&page_size=10"
-    )
+    r = client.get("/api/v1/persons/search?query=Alex&page_number=1&page_size=10")
     assert r.status_code == 200
     data = r.json()
     assert any("Alex" in i["full_name"] for i in data)

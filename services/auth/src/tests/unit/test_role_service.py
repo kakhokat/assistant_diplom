@@ -1,10 +1,8 @@
 # src/tests/unit/test_role_service.py
 
-from uuid import UUID
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
-
 from fastapi import HTTPException
 
 from domain.models.tokens import PermissionCheckRequest

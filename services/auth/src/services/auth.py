@@ -1,36 +1,29 @@
 import hashlib
 import secrets
-
-from datetime import datetime
-from datetime import timedelta
-from datetime import timezone
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from uuid import UUID
 
 import jwt
-
-from fastapi import Depends
-from fastapi import HTTPException
-from fastapi import status
+from fastapi import Depends, HTTPException, status
 from redis.asyncio import Redis
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.security import create_access_token
-from core.security import create_refresh_token
-from core.security import decode_token
-from core.security import hash_password
-from core.security import is_access_token
-from core.security import is_refresh_token
-from core.security import verify_password
+from core.security import (
+    create_access_token,
+    create_refresh_token,
+    decode_token,
+    hash_password,
+    is_access_token,
+    is_refresh_token,
+    verify_password,
+)
 from core.settings import settings
 from db.postgres import get_session
 from db.redis import get_redis
 from domain.models.tokens import TokenPair
-from domain.models.user import LoginRequest
-from domain.models.user import UserCreate
-from domain.models.user import UserProfile
-from domain.models.user import UserRead
+from domain.models.user import LoginRequest, UserCreate, UserProfile, UserRead
 from infrastructure.postgres.role_repo import RoleRepo
 from infrastructure.postgres.social_repo import SocialRepo
 from infrastructure.postgres.token_repo import TokenRepo

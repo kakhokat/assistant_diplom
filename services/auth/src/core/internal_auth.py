@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-from fastapi import HTTPException
-from fastapi import Request
-from fastapi import status
+from fastapi import HTTPException, Request, status
 
 from core.settings import settings
 

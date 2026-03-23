@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from motor.motor_asyncio import AsyncIOMotorClient
-from motor.motor_asyncio import AsyncIOMotorDatabase
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 
 from .settings import settings
 

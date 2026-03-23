@@ -1,7 +1,6 @@
 from uuid import UUID
 
-from pydantic import BaseModel
-from pydantic import ConfigDict
+from pydantic import BaseModel, ConfigDict
 
 
 class RoleBase(BaseModel):

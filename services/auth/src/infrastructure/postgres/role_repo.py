@@ -1,18 +1,12 @@
-from typing import List
-from typing import Optional
+from typing import List, Optional
 from uuid import UUID
 
-from sqlalchemy import delete
-from sqlalchemy import select
-from sqlalchemy import update
+from sqlalchemy import delete, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from domain.models.role import RoleCreate
-from domain.models.role import RoleUpdate
-from infrastructure.postgres.models import Role
-from infrastructure.postgres.models import User
-from infrastructure.postgres.models import UserRole
+from domain.models.role import RoleCreate, RoleUpdate
+from infrastructure.postgres.models import Role, User, UserRole
 
 
 class RoleRepo:

@@ -2,20 +2,12 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter
-from fastapi import Depends
-from fastapi import HTTPException
-from fastapi import Query
-from fastapi import Response
-from fastapi import status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
-from ..auth import CurrentUserId
-from ..auth import get_current_user_id
+from ..auth import CurrentUserId, get_current_user_id
 from ..deps import db_dep
-from ..models.like import LikeAggregatesOut
-from ..models.like import LikeCreate
-from ..models.like import LikeOut
+from ..models.like import LikeAggregatesOut, LikeCreate, LikeOut
 from ..repositories.likes_repo import LikesRepo
 
 router = APIRouter(

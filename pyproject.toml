@@ -1,0 +1,54 @@
+[tool.black]
+line-length = 88
+target-version = ["py311"]
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+    \.git
+  | \.venv
+  | venv
+  | env
+  | build
+  | dist
+  | __pycache__
+  | \.mypy_cache
+  | \.pytest_cache
+  | \.ruff_cache
+  | migrations
+  | research
+  | data
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 88
+combine_as_imports = true
+include_trailing_comma = true
+src_paths = [
+    "services/assistant/src",
+    "services/assistant/tests",
+    "services/auth/src",
+    "services/auth/src/tests",
+    "services/async_api/src",
+    "services/async_api/tests",
+    "services/async_api/scripts",
+    "services/ugc/services/ugc_api",
+    "services/ugc/tests",
+]
+skip_gitignore = true
+skip = [
+    ".git",
+    ".venv",
+    "venv",
+    "env",
+    "build",
+    "dist",
+    "__pycache__",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    "migrations",
+    "research",
+    "data",
+]

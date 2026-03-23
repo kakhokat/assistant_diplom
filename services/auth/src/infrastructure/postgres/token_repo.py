@@ -1,15 +1,11 @@
-from datetime import datetime
-from datetime import timezone
-from typing import List
-from typing import Optional
+from datetime import datetime, timezone
+from typing import List, Optional
 from uuid import UUID
 
-from sqlalchemy import select
-from sqlalchemy import update
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from infrastructure.postgres.models import LoginHistory
-from infrastructure.postgres.models import RefreshToken
+from infrastructure.postgres.models import LoginHistory, RefreshToken
 
 
 class TokenRepo:

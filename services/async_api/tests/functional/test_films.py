@@ -7,9 +7,7 @@ def test_films_list_sorted(client):
     data = r.json()
     assert isinstance(data, list)
     # проверим сортировку по imdb_rating desc (None в конце)
-    ratings = [
-        i.get("imdb_rating") for i in data if i.get("imdb_rating") is not None
-    ]
+    ratings = [i.get("imdb_rating") for i in data if i.get("imdb_rating") is not None]
     assert ratings == sorted(ratings, reverse=True)
 
 
@@ -39,9 +37,7 @@ def test_film_details_not_found(client):
 
 
 def test_films_search(client):
-    r = client.get(
-        "/api/v1/films/search?query=star&page_number=1&page_size=50"
-    )
+    r = client.get("/api/v1/films/search?query=star&page_number=1&page_size=50")
     assert r.status_code == 200
     data = r.json()
     assert isinstance(data, list)

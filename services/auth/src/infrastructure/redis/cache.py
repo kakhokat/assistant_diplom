@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Optional
 
 import redis.exceptions as redis_exc
-
 from redis.asyncio import Redis
 
 

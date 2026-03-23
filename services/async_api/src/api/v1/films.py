@@ -26,9 +26,7 @@ async def films_list(
     )
 
 
-@router.get(
-    "/search", response_model=List[FilmListItem], summary="Search films"
-)
+@router.get("/search", response_model=List[FilmListItem], summary="Search films")
 async def films_search(
     query: str = Query(min_length=1),
     pagination: PaginationParams = Depends(),
@@ -47,9 +45,7 @@ async def film_details(
 ) -> FilmDetail:
     film = await film_service.get_by_id(str(film_id))
     if not film:
-        raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail="film not found"
-        )
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="film not found")
     return FilmDetail(
         uuid=film.id,
         title=film.title,

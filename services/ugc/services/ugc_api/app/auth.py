@@ -1,17 +1,11 @@
 from __future__ import annotations
 
 import os
-
-from typing import Annotated
-from typing import Any
+from typing import Annotated, Any
 
 import jwt
-
-from fastapi import Depends
-from fastapi import HTTPException
-from fastapi import status
-from fastapi.security import HTTPAuthorizationCredentials
-from fastapi.security import HTTPBearer
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 ENV_JWT_SECRET = "JWT_SECRET"
 ENV_JWT_ALGORITHM = "JWT_ALGORITHM"
@@ -50,7 +44,9 @@ def get_current_user_id(
         issuer_raw = os.environ.get(ENV_JWT_ISSUER)
         audience_raw = os.environ.get(ENV_JWT_AUDIENCE)
         issuer = issuer_raw.strip() if issuer_raw and issuer_raw.strip() else None
-        audience = audience_raw.strip() if audience_raw and audience_raw.strip() else None
+        audience = (
+            audience_raw.strip() if audience_raw and audience_raw.strip() else None
+        )
 
         options: dict[str, Any] = {
             "require": ["sub", "exp"],

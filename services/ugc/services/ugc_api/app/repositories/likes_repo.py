@@ -1,28 +1,27 @@
 from __future__ import annotations
 
-from datetime import datetime
-from datetime import timezone
-from typing import Any
-from typing import Optional
-from typing import cast
+from datetime import datetime, timezone
+from typing import Any, Optional, cast
 
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
-from ..constants import AVG
-from ..constants import COUNT
-from ..constants import CREATED_AT
-from ..constants import DISLIKE_CNT
-from ..constants import FILM_ID
-from ..constants import LIKE_CNT
-from ..constants import OP_AVG
-from ..constants import OP_COND
-from ..constants import OP_EQ
-from ..constants import OP_GROUP
-from ..constants import OP_MATCH
-from ..constants import OP_SUM
-from ..constants import UPDATED_AT
-from ..constants import USER_ID
-from ..constants import VALUE
+from ..constants import (
+    AVG,
+    COUNT,
+    CREATED_AT,
+    DISLIKE_CNT,
+    FILM_ID,
+    LIKE_CNT,
+    OP_AVG,
+    OP_COND,
+    OP_EQ,
+    OP_GROUP,
+    OP_MATCH,
+    OP_SUM,
+    UPDATED_AT,
+    USER_ID,
+    VALUE,
+)
 from ..settings import settings
 
 

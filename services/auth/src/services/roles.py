@@ -1,19 +1,13 @@
 from typing import List
 from uuid import UUID
 
-from fastapi import Depends
-from fastapi import HTTPException
-from fastapi import status
+from fastapi import Depends, HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.postgres import get_session
-from domain.models.role import RoleAssignment
-from domain.models.role import RoleCreate
-from domain.models.role import RoleRead
-from domain.models.role import RoleUpdate
-from domain.models.tokens import PermissionCheckRequest
-from domain.models.tokens import PermissionCheckResponse
+from domain.models.role import RoleAssignment, RoleCreate, RoleRead, RoleUpdate
+from domain.models.tokens import PermissionCheckRequest, PermissionCheckResponse
 from infrastructure.postgres.role_repo import RoleRepo
 from infrastructure.postgres.user_repo import UserRepo
 

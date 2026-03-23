@@ -1,12 +1,8 @@
-from fastapi import APIRouter
-from fastapi import Depends
-from fastapi import Query
+from fastapi import APIRouter, Depends, Query
 
-from domain.models.user import LoginHistoryRecord
-from domain.models.user import UserProfile
-from domain.models.user import UserUpdate
-from services.users import UserService
-from services.users import get_user_service
+from domain.models.user import LoginHistoryRecord, UserProfile, UserUpdate
+from services.users import UserService, get_user_service
+
 from .auth import get_current_user
 
 router = APIRouter()

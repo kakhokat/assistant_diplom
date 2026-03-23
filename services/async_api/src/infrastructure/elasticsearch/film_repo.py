@@ -91,7 +91,15 @@ class FilmESRepository(ESRepositoryBase, ReadOnlyRepository):
                             "boost": 2,
                         }
                     },
-                    {"match": {"description": {"query": query, "operator": "and", "boost": 0.5}}},
+                    {
+                        "match": {
+                            "description": {
+                                "query": query,
+                                "operator": "and",
+                                "boost": 0.5,
+                            }
+                        }
+                    },
                 ],
                 "minimum_should_match": 1,
             }

@@ -1,20 +1,11 @@
 from typing import Annotated
 
-from fastapi import APIRouter
-from fastapi import Depends
-from fastapi import HTTPException
-from fastapi import Request
-from fastapi import status
-from fastapi.security import OAuth2PasswordBearer
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 from domain.models.tokens import TokenPair
-from domain.models.user import LoginRequest
-from domain.models.user import UserCreate
-from domain.models.user import UserProfile
-from domain.models.user import UserRead
-from services.auth import AuthService
-from services.auth import get_auth_service
+from domain.models.user import LoginRequest, UserCreate, UserProfile, UserRead
+from services.auth import AuthService, get_auth_service
 
 router = APIRouter()
 

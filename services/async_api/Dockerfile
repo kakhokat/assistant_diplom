@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -24,7 +24,6 @@ RUN pip install -r requirements-dev.txt \
 # положим тесты и конфиги pytest в образ
 COPY tests ./tests
 COPY pytest.ini ./pytest.ini
-COPY pyproject.toml ./pyproject.toml
 
 # copy данные
 COPY scripts ./scripts

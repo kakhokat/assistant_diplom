@@ -1,8 +1,7 @@
 from typing import Protocol
 from uuid import UUID
 
-from domain.models.role import RoleCreate
-from domain.models.role import RoleUpdate
+from domain.models.role import RoleCreate, RoleUpdate
 
 
 class RoleRepository(Protocol):

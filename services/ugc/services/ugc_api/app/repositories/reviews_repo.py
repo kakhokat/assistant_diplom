@@ -1,21 +1,20 @@
 from __future__ import annotations
 
-from datetime import datetime
-from datetime import timezone
-from typing import Any
-from typing import Optional
-from typing import cast
+from datetime import datetime, timezone
+from typing import Any, Optional, cast
 from uuid import uuid4
 
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
-from ..constants import CREATED_AT
-from ..constants import FILM_ID
-from ..constants import REVIEW_ID
-from ..constants import TEXT
-from ..constants import UPDATED_AT
-from ..constants import USER_FILM_RATING
-from ..constants import USER_ID
+from ..constants import (
+    CREATED_AT,
+    FILM_ID,
+    REVIEW_ID,
+    TEXT,
+    UPDATED_AT,
+    USER_FILM_RATING,
+    USER_ID,
+)
 from ..settings import settings
 
 

@@ -3,6 +3,7 @@ from typing import List, Optional
 
 from elasticsearch import AsyncElasticsearch
 from fastapi import Depends
+from infrastructure.elasticsearch.person_repo import PersonESRepository
 from redis.asyncio import Redis
 
 from core.settings import settings
@@ -11,7 +12,6 @@ from db.redis import get_redis
 from domain.models.person import Person, PersonListItem
 from domain.ports.cache import Cache
 from domain.ports.repository import ReadOnlyRepository
-from infrastructure.elasticsearch.person_repo import PersonESRepository
 from infrastructure.redis.cache import RedisCache, dumps, loads
 
 PERSON_CACHE_TTL = settings.PERSON_CACHE_TTL
@@ -36,9 +36,7 @@ class PersonService:
             return None
         person = Person(**src)
         if self.cache:
-            await self.cache.set(
-                key, person.json().encode("utf-8"), PERSON_CACHE_TTL
-            )
+            await self.cache.set(key, person.json().encode("utf-8"), PERSON_CACHE_TTL)
         return person
 
     async def list_persons(

@@ -1,25 +1,16 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter
-from fastapi import Depends
-from fastapi import HTTPException
-from fastapi import Request
-from fastapi import status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 
 from core.internal_auth import require_internal_api_key
-from domain.models.role import RoleAssignment
-from domain.models.role import RoleCreate
-from domain.models.role import RoleRead
-from domain.models.role import RoleUpdate
-from domain.models.tokens import PermissionCheckRequest
-from domain.models.tokens import PermissionCheckResponse
+from domain.models.role import RoleAssignment, RoleCreate, RoleRead, RoleUpdate
+from domain.models.tokens import PermissionCheckRequest, PermissionCheckResponse
 from domain.models.user import UserProfile
-from services.auth import AuthService
-from services.auth import get_auth_service
-from services.roles import RoleService
-from services.roles import get_role_service
+from services.auth import AuthService, get_auth_service
+from services.roles import RoleService, get_role_service
+
 from .auth import get_current_user
 
 router = APIRouter()

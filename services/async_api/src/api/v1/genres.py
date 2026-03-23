@@ -20,9 +20,7 @@ async def genres_list(
     )
 
 
-@router.get(
-    "/search", response_model=List[GenreListItem], summary="Search genres"
-)
+@router.get("/search", response_model=List[GenreListItem], summary="Search genres")
 async def genres_search(
     query: str = Query(min_length=1),
     pagination: PaginationParams = Depends(),

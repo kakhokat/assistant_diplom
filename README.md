@@ -153,45 +153,6 @@ docker compose ps
 - assistant OpenAPI: `http://localhost/assistant/openapi.json`
 - endpoint ассистента: `POST http://localhost/assistant/api/v1/ask`
 
-## Проверка проекта
-
-Полная проверка:
-
-```powershell
-.\scripts\check-all.ps1
-```
-
-Поштучно:
-
-```powershell
-.\scripts\check-01-infra.ps1
-.\scripts\check-02-auth.ps1
-.\scripts\check-03-async-api.ps1
-.\scripts\check-04-ugc.ps1
-.\scripts\check-05-assistant.ps1
-.\scripts\check-06-logs.ps1
-.\scripts\check-07-secrets.ps1
-.\scripts\check-08-security.ps1
-```
-
-## Проверка ассистента отдельно
-
-```powershell
-cd .\services\assistant
-
-py -3.12 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-
-python -m pip install --upgrade pip
-pip install -r requirements.txt -r requirements-dev.txt
-pip install black isort flake8 pytest-asyncio
-
-pytest -q
-black --check src tests
-isort --check-only src tests
-flake8 src tests --max-line-length=88
-```
-
 ## Как устроен демо-сценарий
 
 Обычный порядок показа такой:

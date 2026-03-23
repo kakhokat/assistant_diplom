@@ -3,12 +3,10 @@
 from uuid import uuid4
 
 import pytest
-
 from fastapi import HTTPException
 
 from core.security import hash_password
-from domain.models.user import UserProfile
-from domain.models.user import UserUpdate
+from domain.models.user import UserProfile, UserUpdate
 from services.users import UserService
 
 

@@ -3,6 +3,7 @@ from typing import List, Optional
 
 from elasticsearch import AsyncElasticsearch
 from fastapi import Depends
+from infrastructure.elasticsearch.genre_repo import GenreESRepository
 from redis.asyncio import Redis
 
 from core.settings import settings
@@ -11,7 +12,6 @@ from db.redis import get_redis
 from domain.models.genre import Genre, GenreListItem
 from domain.ports.cache import Cache
 from domain.ports.repository import ReadOnlyRepository
-from infrastructure.elasticsearch.genre_repo import GenreESRepository
 from infrastructure.redis.cache import RedisCache, dumps, loads
 
 GENRE_CACHE_TTL = settings.GENRE_CACHE_TTL
@@ -36,9 +36,7 @@ class GenreService:
             return None
         genre = Genre(**src)
         if self.cache:
-            await self.cache.set(
-                key, genre.json().encode("utf-8"), GENRE_CACHE_TTL
-            )
+            await self.cache.set(key, genre.json().encode("utf-8"), GENRE_CACHE_TTL)
         return genre
 
     async def list_genres(
@@ -60,13 +58,10 @@ class GenreService:
             source=["id", "name"],
         )
         items = [
-            GenreListItem(uuid=r.get("id", ""), name=r.get("name", ""))
-            for r in rows
+            GenreListItem(uuid=r.get("id", ""), name=r.get("name", "")) for r in rows
         ]
         if self.cache:
-            await self.cache.set(
-                key, dumps([i.dict() for i in items]), GENRE_CACHE_TTL
-            )
+            await self.cache.set(key, dumps([i.dict() for i in items]), GENRE_CACHE_TTL)
         return items
 
     async def search_genres(
@@ -89,13 +84,10 @@ class GenreService:
             source=["id", "name"],
         )
         items = [
-            GenreListItem(uuid=r.get("id", ""), name=r.get("name", ""))
-            for r in rows
+            GenreListItem(uuid=r.get("id", ""), name=r.get("name", "")) for r in rows
         ]
         if self.cache:
-            await self.cache.set(
-                key, dumps([i.dict() for i in items]), GENRE_CACHE_TTL
-            )
+            await self.cache.set(key, dumps([i.dict() for i in items]), GENRE_CACHE_TTL)
         return items
 
 

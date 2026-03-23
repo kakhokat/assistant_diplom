@@ -3,8 +3,7 @@ import asyncio
 import typer
 
 from core.security import hash_password
-from db.postgres import AsyncSessionLocal
-from db.postgres import init_models
+from db.postgres import AsyncSessionLocal, init_models
 from domain.models.user import UserCreate
 from infrastructure.postgres.user_repo import UserRepo
 

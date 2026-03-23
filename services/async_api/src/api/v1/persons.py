@@ -20,9 +20,7 @@ async def persons_list(
     )
 
 
-@router.get(
-    "/search", response_model=List[PersonListItem], summary="Search persons"
-)
+@router.get("/search", response_model=List[PersonListItem], summary="Search persons")
 async def persons_search(
     query: str = Query(min_length=1),
     pagination: PaginationParams = Depends(),

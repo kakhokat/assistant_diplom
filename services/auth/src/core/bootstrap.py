@@ -2,14 +2,13 @@ from __future__ import annotations
 
 import logging
 
+from core.security import hash_password
+from core.settings import settings
+from db.postgres import AsyncSessionLocal
 from domain.models.role import RoleCreate
 from domain.models.user import UserCreate
 from infrastructure.postgres.role_repo import RoleRepo
 from infrastructure.postgres.user_repo import UserRepo
-
-from core.security import hash_password
-from core.settings import settings
-from db.postgres import AsyncSessionLocal
 
 logger = logging.getLogger("auth.bootstrap")
 
@@ -33,7 +32,9 @@ async def ensure_bootstrap_admin() -> None:
         for role_name in ("user", "admin"):
             role = await role_repo.get_role_by_name(role_name)
             if not role:
-                await role_repo.create_role(RoleCreate(name=role_name, description=None))
+                await role_repo.create_role(
+                    RoleCreate(name=role_name, description=None)
+                )
                 logger.info("Created role: %s", role_name)
 
         user_repo = UserRepo(session)

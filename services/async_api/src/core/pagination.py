@@ -29,9 +29,7 @@ class PaginationParams(BaseModel):
 
     def __init__(
         self,
-        page_number: int = Query(
-            default=1, ge=1, description="Номер страницы (с 1)"
-        ),
+        page_number: int = Query(default=1, ge=1, description="Номер страницы (с 1)"),
         page_size: int = Query(
             default=DEFAULT_PAGE_SIZE,
             ge=1,

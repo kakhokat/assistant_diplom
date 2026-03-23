@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -29,7 +29,6 @@ COPY openapi.yaml ./openapi.yaml
 # копируем исходники
 COPY src ./src
 COPY pyproject.toml ./pyproject.toml
-COPY .flake8 ./.flake8
 
 EXPOSE 8000
 

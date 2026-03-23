@@ -3,12 +3,9 @@ from __future__ import annotations
 from urllib.parse import urlencode
 
 import httpx
+from fastapi import HTTPException, status
 
-from fastapi import HTTPException
-from fastapi import status
-
-from core.oauth_state import create_oauth_state
-from core.oauth_state import decode_oauth_state
+from core.oauth_state import create_oauth_state, decode_oauth_state
 from core.settings import settings
 from services.auth import AuthService
 

@@ -1,7 +1,6 @@
 import os
 import sys
 import time
-
 from pathlib import Path
 from typing import Any
 
@@ -27,7 +26,6 @@ _setup_test_env()
 
 import jwt  # noqa: E402
 import pytest  # noqa: E402
-
 from httpx import ASGITransport  # noqa: E402
 from httpx import AsyncClient  # noqa: E402
 

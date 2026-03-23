@@ -2,21 +2,12 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter
-from fastapi import Body
-from fastapi import Depends
-from fastapi import HTTPException
-from fastapi import Query
-from fastapi import Response
-from fastapi import status
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, Response, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
-from ..auth import CurrentUserId
-from ..auth import get_current_user_id
+from ..auth import CurrentUserId, get_current_user_id
 from ..deps import db_dep
-from ..models.review import ReviewCreate
-from ..models.review import ReviewOut
-from ..models.review import ReviewUpdate
+from ..models.review import ReviewCreate, ReviewOut, ReviewUpdate
 from ..repositories.reviews_repo import ReviewsRepo
 
 router = APIRouter(

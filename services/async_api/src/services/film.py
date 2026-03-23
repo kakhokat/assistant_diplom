@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Optional
 
 from elasticsearch import AsyncElasticsearch
 from fastapi import Depends
+from infrastructure.elasticsearch.film_repo import FilmESRepository
 from redis.asyncio import Redis
 
 from core.settings import settings
@@ -11,7 +12,6 @@ from db.redis import get_redis
 from domain.models.film import Film, FilmListItem
 from domain.ports.cache import Cache
 from domain.ports.repository import ReadOnlyRepository
-from infrastructure.elasticsearch.film_repo import FilmESRepository
 from infrastructure.redis.cache import RedisCache, dumps, loads
 
 FILM_CACHE_EXPIRE_IN_SECONDS = settings.FILM_CACHE_TTL
@@ -80,7 +80,16 @@ class FilmService:
             page_number=page_number,
             page_size=page_size,
             filters={"genre": genre} if genre else None,
-            source=["id", "title", "original_title", "title_aliases", "imdb_rating", "description", "genre", "directors"],
+            source=[
+                "id",
+                "title",
+                "original_title",
+                "title_aliases",
+                "imdb_rating",
+                "description",
+                "genre",
+                "directors",
+            ],
         )
         items = [
             FilmListItem(
@@ -132,7 +141,16 @@ class FilmService:
             sort="-imdb_rating",
             page_number=page_number,
             page_size=page_size,
-            source=["id", "title", "original_title", "title_aliases", "imdb_rating", "description", "genre", "directors"],
+            source=[
+                "id",
+                "title",
+                "original_title",
+                "title_aliases",
+                "imdb_rating",
+                "description",
+                "genre",
+                "directors",
+            ],
         )
         items = [
             FilmListItem(
