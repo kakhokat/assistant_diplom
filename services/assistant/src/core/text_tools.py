@@ -2,18 +2,18 @@ from __future__ import annotations
 
 import re
 from difflib import SequenceMatcher
-from typing import Any
-from typing import Callable
-from typing import Iterable
+from typing import Any, Callable, Iterable
 
 
 def normalize_for_match(value: str) -> str:
-    cleaned = re.sub(r'[^\w\s]+', ' ', value.lower().replace('ё', 'е'))
-    return ' '.join(cleaned.split())
+    cleaned = re.sub(r"[^\w\s]+", " ", value.lower().replace("ё", "е"))
+    return " ".join(cleaned.split())
 
 
 def similarity(left: str, right: str) -> float:
-    return SequenceMatcher(None, normalize_for_match(left), normalize_for_match(right)).ratio()
+    return SequenceMatcher(
+        None, normalize_for_match(left), normalize_for_match(right)
+    ).ratio()
 
 
 def pick_best_candidate(
@@ -26,7 +26,7 @@ def pick_best_candidate(
     normalized_query = normalize_for_match(query)
 
     for item in items:
-        value = value_getter(item) or ''
+        value = value_getter(item) or ""
         normalized_value = normalize_for_match(value)
         score = similarity(query, value)
         if normalized_query and normalized_value:

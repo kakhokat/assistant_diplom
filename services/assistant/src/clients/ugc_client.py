@@ -16,7 +16,7 @@ class UgcClient:
             f"{settings.UGC_API_BASE_URL}/bookmarks/by-user"
             f"?user_id={quote(user_id)}&limit=50&offset=0"
         )
-        resp = await self.client.get(url, headers={'Authorization': authorization})
+        resp = await self.client.get(url, headers={"Authorization": authorization})
         resp.raise_for_status()
         return resp.json()
 
@@ -25,6 +25,6 @@ class UgcClient:
             f"{settings.UGC_API_BASE_URL}/likes/by-user"
             f"?user_id={quote(user_id)}&limit=50&offset=0"
         )
-        resp = await self.client.get(url, headers={'Authorization': authorization})
+        resp = await self.client.get(url, headers={"Authorization": authorization})
         resp.raise_for_status()
         return resp.json()

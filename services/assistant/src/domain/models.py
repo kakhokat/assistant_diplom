@@ -1,8 +1,6 @@
-from typing import Any
-from typing import Literal
+from typing import Any, Literal
 
-from pydantic import BaseModel
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 
 class AskRequest(BaseModel):
@@ -13,7 +11,7 @@ class AskRequest(BaseModel):
 class AssistantFeedbackRequest(BaseModel):
     session_id: str = Field(min_length=3, max_length=128)
     query: str = Field(min_length=2, max_length=500)
-    reaction: Literal['up', 'down']
+    reaction: Literal["up", "down"]
     intent: str | None = Field(default=None, max_length=64)
     metadata: dict[str, Any] = Field(default_factory=dict)
 
